@@ -2,3 +2,5 @@ compress
 decompress
 *.huff
 *.uhuff
+*.pgm
+*.ppm
