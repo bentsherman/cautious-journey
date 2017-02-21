@@ -5,6 +5,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include "tree.h"
 
 int main(int argc, char **argv)
 {
@@ -26,19 +27,19 @@ int main(int argc, char **argv)
     fread(data, sizeof(char), data_len, in);
     fclose(in);
 
-    // perform Huffman decompression on data
-    long uhuffman_len;
-    char *uhuffman_data;
+    // read list of word frequencies into priority queue
+
+    // build Huffman tree
 
     // write decompressed data to file
     FILE *out = fopen("data.uhuff", "wb");
 
-    fwrite(uhuffman_data, sizeof(char), uhuffman_len, out);
+    // ...
+
     fclose(out);
 
     // cleanup
     free(data);
-    free(uhuffman_data);
 
     return 0;
 }

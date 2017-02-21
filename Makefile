@@ -5,10 +5,10 @@ BINS = compress decompress
 
 all: $(BINS)
 
-compress: compress.c
+compress: compress.c tree.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-decompress: decompress.c
+decompress: decompress.c tree.c
 	$(CC) $(CFLAGS) -o $@ $^
 
 test: all
@@ -17,4 +17,4 @@ test: all
 	diff $(FILE) data.uhuff
 
 clean:
-	rm $(BINS) *.huff *.uhuff
+	rm -f $(BINS) *.huff *.uhuff
