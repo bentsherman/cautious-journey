@@ -195,3 +195,79 @@ void tree_debug_print(node_t *root, int len, unsigned int code)
         tree_debug_print(root->right, len + 1, (code << 1) | 0x1);
     }
 }
+
+/**
+ * Print the Huffman code for each leaf node in a Huffman tree.
+ *
+ * As a common convention, bit '0' represents following the
+ * left child and bit '1' represents following the right child.
+ *
+ * @param root
+ * @param len
+ * @param code
+ */
+int getCodeLength(node_t *root, int len, unsigned int code, unsigned char symbol)
+{
+    assert((root->left == NULL) == (root->right == NULL));
+
+    if ( root->left == NULL && root->right == NULL && root->symbol == symbol) {
+      return len;
+    }
+    else {
+        tree_debug_print(root->left, len + 1, (code << 1) | 0x0);
+        tree_debug_print(root->right, len + 1, (code << 1) | 0x1);
+    }
+    return 0;
+}
+
+/**
+ * Print the Huffman code for each leaf node in a Huffman tree.
+ *
+ * As a common convention, bit '0' represents following the
+ * left child and bit '1' represents following the right child.
+ *
+ * @param root
+ * @param len
+ * @param code
+ */
+unsigned long int getCode(node_t *root, int len, unsigned int code, unsigned char symbol)
+{
+    assert((root->left == NULL) == (root->right == NULL));
+
+    if ( root->left == NULL && root->right == NULL && root->symbol == symbol) {
+      return (unsigned long int)code;
+    }
+    else {
+        tree_debug_print(root->left, len + 1, (code << 1) | 0x0);
+        tree_debug_print(root->right, len + 1, (code << 1) | 0x1);
+    }
+    return 0;
+}
+
+/**
+ * Adds a symbol frequency pair to the list.
+ *
+ * @param head
+ * @param tail
+ * @param symbol
+ * @param frequency
+ */
+list_t *listAdd(list_t *head, list_t *tail, unsigned char symbol, int frequency) {
+  list_t *entry;
+
+    entry = (list_t *)malloc(sizeof(list_t));
+    entry->symbol = symbol;
+    entry->frequency = frequency;
+    entry->next = NULL;
+    if (head != NULL) {
+      tail->next = entry;
+    } else {
+      head = entry;
+    }
+    tail = entry;
+    return tail;
+}
+
+void writeData(FILE *out, node_t *tree, char *data) {
+
+}

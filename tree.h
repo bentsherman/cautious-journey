@@ -20,6 +20,12 @@ typedef struct {
     node_t **entries;
 } queue_t;
 
+typedef struct List {
+    unsigned char symbol;
+    int frequency;
+    struct List *next;
+} list_t;
+
 queue_t * queue_construct(int size);
 void queue_destruct(queue_t *queue);
 int queue_length(queue_t *queue);
@@ -30,5 +36,10 @@ void queue_debug_print(queue_t *queue);
 node_t * tree_construct(queue_t *queue);
 void tree_destruct(node_t *root);
 void tree_debug_print(node_t *root, int len, unsigned int code);
+int getCodeLength(node_t *root, int len, unsigned int code, unsigned char symbol);
+unsigned long int getCode(node_t *root, int len, unsigned int code, unsigned char symbol);
+
+list_t *listAdd(list_t *head, list_t *tail, unsigned char symbol, int frequency);
+
 
 #endif
