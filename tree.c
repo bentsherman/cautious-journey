@@ -210,16 +210,14 @@ int getCodeLength(node_t *root, int len, unsigned long code, unsigned char symbo
 {
     assert((root->left == NULL) == (root->right == NULL));
 
-    if ( root->left == NULL && root->right == NULL ) {
-        if ( root->symbol == symbol ) {
-            return len;
-        }
-        else {
-            return getCodeLength(root->left, len + 1, (code << 1) | 0x0, symbol)
-                 + getCodeLength(root->right, len + 1, (code << 1) | 0x1, symbol);
-        }
+    if ( root->left == NULL && root->right == NULL) {
+      if (root->symbol == symbol) {
+        return len;
+      }
     }
-
+    else {
+        return getCodeLength(root->left, len + 1, (code << 1) | 0x0, symbol) + getCodeLength(root->right, len + 1, (code << 1) | 0x1, symbol);
+    }
     return 0;
 }
 
@@ -241,12 +239,10 @@ unsigned long getCode(node_t *root, int len, unsigned long code, unsigned char s
         if ( root->symbol == symbol ) {
             return code;
         }
-        else {
-            return getCode(root->left, len + 1, (code << 1) | 0x0, symbol)
-                 + getCode(root->right, len + 1, (code << 1) | 0x1, symbol);
-        }
     }
-
+    else {
+          return getCode(root->left, len + 1, (code << 1) | 0x0, symbol) + getCode(root->right, len + 1, (code << 1) | 0x1, symbol);
+    }
     return 0;
 }
 

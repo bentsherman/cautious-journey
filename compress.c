@@ -92,6 +92,10 @@ int main(int argc, char **argv)
 
     for ( j = 0; j < data_len; j++ ) {
       total_bits += getCodeLength(tree, 0, 0x00, data[j]);
+      if (total_bits == 0) {
+        printf("\nError in getCodeLength! (Returned a zero)\n\n");
+        exit(1);
+      }
     }
 
     fwrite(&total_bits, sizeof(int), 1, out);
