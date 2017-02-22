@@ -206,17 +206,20 @@ void tree_debug_print(node_t *root, int len, unsigned int code)
  * @param len
  * @param code
  */
-int getCodeLength(node_t *root, int len, unsigned int code, unsigned char symbol)
+int getCodeLength(node_t *root, int len, unsigned long code, unsigned char symbol)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
-    if ( root->left == NULL && root->right == NULL && root->symbol == symbol) {
-      return len;
+    if ( root->left == NULL && root->right == NULL ) {
+        if ( root->symbol == symbol ) {
+            return len;
+        }
+        else {
+            return getCodeLength(root->left, len + 1, (code << 1) | 0x0, symbol)
+                 + getCodeLength(root->right, len + 1, (code << 1) | 0x1, symbol);
+        }
     }
-    else {
-        tree_debug_print(root->left, len + 1, (code << 1) | 0x0);
-        tree_debug_print(root->right, len + 1, (code << 1) | 0x1);
-    }
+
     return 0;
 }
 
@@ -230,17 +233,20 @@ int getCodeLength(node_t *root, int len, unsigned int code, unsigned char symbol
  * @param len
  * @param code
  */
-unsigned long int getCode(node_t *root, int len, unsigned int code, unsigned char symbol)
+unsigned long getCode(node_t *root, int len, unsigned long code, unsigned char symbol)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
-    if ( root->left == NULL && root->right == NULL && root->symbol == symbol) {
-      return (unsigned long int)code;
+    if ( root->left == NULL && root->right == NULL ) {
+        if ( root->symbol == symbol ) {
+            return code;
+        }
+        else {
+            return getCode(root->left, len + 1, (code << 1) | 0x0, symbol)
+                 + getCode(root->right, len + 1, (code << 1) | 0x1, symbol);
+        }
     }
-    else {
-        tree_debug_print(root->left, len + 1, (code << 1) | 0x0);
-        tree_debug_print(root->right, len + 1, (code << 1) | 0x1);
-    }
+
     return 0;
 }
 

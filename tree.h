@@ -36,10 +36,9 @@ void queue_debug_print(queue_t *queue);
 node_t * tree_construct(queue_t *queue);
 void tree_destruct(node_t *root);
 void tree_debug_print(node_t *root, int len, unsigned int code);
-int getCodeLength(node_t *root, int len, unsigned int code, unsigned char symbol);
-unsigned long int getCode(node_t *root, int len, unsigned int code, unsigned char symbol);
+int getCodeLength(node_t *root, int len, unsigned long code, unsigned char symbol);
+unsigned long getCode(node_t *root, int len, unsigned long code, unsigned char symbol);
 
 list_t *listAdd(list_t *head, list_t *tail, unsigned char symbol, int frequency);
-
 
 #endif
