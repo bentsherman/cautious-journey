@@ -98,10 +98,10 @@ int main(int argc, char **argv)
       }
     }
 
-    fwrite(&total_bits, sizeof(int), 1, out);
+    fwrite(&data_len, sizeof(long), 1, out);
 
     // The number of bits modulo (write size) will matter when we get to the end of our data.
-    unsigned long int buffer; // 64 bits
+    unsigned long int buffer; // 32 bits
     int bits_in_buffer = 0;
     int current_length;
     int difference;
@@ -115,15 +115,15 @@ int main(int argc, char **argv)
       if (bits_in_buffer == 0) {
             buffer |= current_code;
             bits_in_buffer = current_length;
-      } else if (bits_in_buffer + current_length == 64) {
+      } else if (bits_in_buffer + current_length == (sizeof(unsigned long int) * 8)) {
             buffer <<= current_length;
             buffer |= current_code;
             fwrite(&buffer, sizeof(unsigned long int), 1, out);
             buffer &= 0;
             bits_in_buffer = 0;
-      } else if (bits_in_buffer + current_length > 64) {
+      } else if (bits_in_buffer + current_length > (sizeof(unsigned long int) * 8)) {
         // Case where we need to stuff the remaining bits that will fit, write the buffer, flush the buffer, and then stuff the leftover bits.
-            difference = 64 - bits_in_buffer;
+            difference = (sizeof(unsigned long int) * 8) - bits_in_buffer;
             temp &= 0;
             temp |= current_code;
             temp >>= (current_length - difference);
@@ -183,7 +183,7 @@ int main(int argc, char **argv)
                 temp &= 0xFFFF;
                 break;
               default:
-                printf("7nBuffer overflow error while writing compresseed data!\n\n");
+                printf("\nBuffer overflow error while writing compresseed data!\n\n");
                 exit(1);
             }
             buffer |= temp;
@@ -197,7 +197,7 @@ int main(int argc, char **argv)
     }
 
     if (bits_in_buffer > 0) {
-      buffer <<= (64 - bits_in_buffer);
+      buffer <<= ((sizeof(unsigned long int) * 8) - bits_in_buffer);
       fwrite(&buffer, sizeof(unsigned long int), 1, out);
     }
 

@@ -51,27 +51,61 @@ int main(int argc, char **argv)
     node_t *tree = tree_construct(queue);
     tree_debug_print(tree, 0, 0x00);
 
-    /*
-    fseek(in, 0L, SEEK_END);
-
-    long data_len = ftell(in);
-    char *data = (char *)malloc(data_len * sizeof(char));
-
-    fseek(in, 0L, SEEK_SET);
-    fread(data, sizeof(char), data_len, in);
-    fclose(in);
-    */
-
     // write decompressed data to file
     FILE *out = fopen("data.uhuff", "wb");
 
-    // ...
+    // We need to read in the total number of bits.
+    long codeCount;
+    if (fread(&codeCount, sizeof(long), 1, in) == 0) {
+      printf("\nThe total number of bits wasn't read! Check format of compressed file.\n\n");
+      exit(1);
+    }
+
+    unsigned int buffer;
+    unsigned int next;
+    int bits_in_next = sizeof(unsigned int) * 8;
+
+    fread(&buffer, sizeof(unsigned int), 1, in);
+    fread(&next, sizeof(unsigned int), 1, in);
+
+    int j;
+    for (j = 0; j < codeCount; j++) {
+      char symbol = getSymbol(tree, buffer);
+      int codeLength = getCodeLength(tree, 0, 0x00, symbol);
+
+      buffer <<= codeLength;
+
+      if ( bits_in_next >= codeLength ) {
+        buffer |= (next >> ((sizeof(unsigned int) * 8) - codeLength));
+
+        next <<= codeLength;
+        bits_in_next -= codeLength;
+      }
+      else {
+        // empty next
+        buffer |= (next >> ((sizeof(unsigned int) * 8) - codeLength));
+
+        int difference = codeLength - bits_in_next;
+
+        next <<= codeLength;
+        bits_in_next = 0;
+
+        // fill up next
+        fread(&next, sizeof(unsigned int), 1, in);
+        bits_in_next = sizeof(unsigned int) * 8;
+
+        // fill up buffer
+        buffer |= (next >> ((sizeof(unsigned int) * 8) - difference));
+
+        next <<= difference;
+        bits_in_next -= difference;
+      }
+
+      fwrite(&symbol, sizeof(char), 1, out);
+    }
 
     fclose(in);
     fclose(out);
-
-    // cleanup
-    //free(data);
 
     return 0;
 }

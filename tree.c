@@ -197,14 +197,13 @@ void tree_debug_print(node_t *root, int len, unsigned int code)
 }
 
 /**
- * Print the Huffman code for each leaf node in a Huffman tree.
+ * Return the Huffman code length for a specific symbol in the tree.
  *
- * As a common convention, bit '0' represents following the
- * left child and bit '1' represents following the right child.
  *
  * @param root
  * @param len
  * @param code
+ * @param symbol
  */
 int getCodeLength(node_t *root, int len, unsigned long code, unsigned char symbol)
 {
@@ -222,14 +221,13 @@ int getCodeLength(node_t *root, int len, unsigned long code, unsigned char symbo
 }
 
 /**
- * Print the Huffman code for each leaf node in a Huffman tree.
+ * Return the Huffman code for a specific symbol in the tree.
  *
- * As a common convention, bit '0' represents following the
- * left child and bit '1' represents following the right child.
  *
  * @param root
  * @param len
  * @param code
+ * @param symbol
  */
 unsigned long getCode(node_t *root, int len, unsigned long code, unsigned char symbol)
 {
@@ -244,6 +242,32 @@ unsigned long getCode(node_t *root, int len, unsigned long code, unsigned char s
           return getCode(root->left, len + 1, (code << 1) | 0x0, symbol) + getCode(root->right, len + 1, (code << 1) | 0x1, symbol);
     }
     return 0;
+}
+
+/**
+ * Return the symbol for a Huffman code in the tree
+ *
+ * As a common convention, bit '0' represents following the
+ * left child and bit '1' represents following the right child.
+ *
+ * @param root
+ * @param len
+ * @param code
+ * @param pattern
+ */
+unsigned char getSymbol(node_t *root, unsigned int buffer)
+{
+    assert((root->left == NULL) == (root->right == NULL));
+
+    if ( root->left == NULL && root->right == NULL ) {
+        return root->symbol;
+    }
+
+    node_t *child = (buffer & 0x8000)
+      ? root->right
+      : root->left;
+
+    return getSymbol(child, buffer << 1);
 }
 
 /**
