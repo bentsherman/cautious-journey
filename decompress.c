@@ -49,7 +49,6 @@ int main(int argc, char **argv)
 
     // build Huffman tree
     node_t *tree = tree_construct(queue);
-    tree_debug_print(tree, 0, 0x00);
 
     // write decompressed data to file
     FILE *out = fopen("data.uhuff", "wb");

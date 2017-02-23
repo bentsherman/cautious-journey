@@ -172,7 +172,7 @@ void tree_destruct(node_t *root)
  * @param len
  * @param code
  */
-void tree_debug_print(node_t *root, int len, unsigned int code)
+void tree_debug_print(node_t *root, int len, code_t code)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
@@ -205,19 +205,17 @@ void tree_debug_print(node_t *root, int len, unsigned int code)
  * @param code
  * @param symbol
  */
-int getCodeLength(node_t *root, int len, unsigned long code, unsigned char symbol)
+int getCodeLength(node_t *root, int len, code_t code, symbol_t symbol)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
     if ( root->left == NULL && root->right == NULL) {
-      if (root->symbol == symbol) {
-        return len;
-      }
+        return (root->symbol == symbol)
+            ? len
+            : 0;
     }
-    else {
-        return getCodeLength(root->left, len + 1, (code << 1) | 0x0, symbol) + getCodeLength(root->right, len + 1, (code << 1) | 0x1, symbol);
-    }
-    return 0;
+
+    return getCodeLength(root->left, len + 1, (code << 1) | 0x0, symbol) + getCodeLength(root->right, len + 1, (code << 1) | 0x1, symbol);
 }
 
 /**
@@ -229,33 +227,26 @@ int getCodeLength(node_t *root, int len, unsigned long code, unsigned char symbo
  * @param code
  * @param symbol
  */
-unsigned long getCode(node_t *root, int len, unsigned long code, unsigned char symbol)
+code_t getCode(node_t *root, int len, code_t code, symbol_t symbol)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
     if ( root->left == NULL && root->right == NULL ) {
-        if ( root->symbol == symbol ) {
-            return code;
-        }
+        return (root->symbol == symbol)
+            ? code
+            : 0;
     }
-    else {
-          return getCode(root->left, len + 1, (code << 1) | 0x0, symbol) + getCode(root->right, len + 1, (code << 1) | 0x1, symbol);
-    }
-    return 0;
+
+    return getCode(root->left, len + 1, (code << 1) | 0x0, symbol) + getCode(root->right, len + 1, (code << 1) | 0x1, symbol);
 }
 
 /**
- * Return the symbol for a Huffman code in the tree
- *
- * As a common convention, bit '0' represents following the
- * left child and bit '1' represents following the right child.
+ * Return the symbol for a Huffman code in the tree.
  *
  * @param root
- * @param len
- * @param code
- * @param pattern
+ * @param buffer
  */
-unsigned char getSymbol(node_t *root, unsigned int buffer)
+symbol_t getSymbol(node_t *root, unsigned int buffer)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
@@ -263,7 +254,7 @@ unsigned char getSymbol(node_t *root, unsigned int buffer)
         return root->symbol;
     }
 
-    node_t *child = (buffer & 0x8000)
+    node_t *child = (buffer & 0x80000000)
       ? root->right
       : root->left;
 
@@ -278,7 +269,7 @@ unsigned char getSymbol(node_t *root, unsigned int buffer)
  * @param symbol
  * @param frequency
  */
-list_t *listAdd(list_t *head, list_t *tail, unsigned char symbol, int frequency) {
+list_t *listAdd(list_t *head, list_t *tail, symbol_t symbol, int frequency) {
   list_t *entry;
 
     entry = (list_t *)malloc(sizeof(list_t));
@@ -292,8 +283,4 @@ list_t *listAdd(list_t *head, list_t *tail, unsigned char symbol, int frequency)
     }
     tail = entry;
     return tail;
-}
-
-void writeData(FILE *out, node_t *tree, char *data) {
-
 }
