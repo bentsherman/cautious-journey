@@ -12,39 +12,27 @@ int main(int argc, char **argv)
     // parse command-line arguments
     if ( argc != 2 ) {
         fprintf(stderr, "usage: ./decompress [filename]\n");
-        return 1;
+        exit(1);
     }
 
-    // read file
     FILE *in = fopen(argv[1], "rb");
 
-    // We need to read in the frequency table first, and the data starts with the number of entries in the table.
-    int total_entries;
-    unsigned char symbol;
-    int weight;
-    int count = 0;
+    // read symbol table
+    int num_entries;
+    fread(&num_entries, sizeof(int), 1, in);
 
-    // Read in the total number of entries.
-    if (fread(&total_entries, sizeof(int), 1, in) == 0) {
-      printf("\nCouldn't read data from file.\n\n");
-      exit(1);
-    }
-
-    // Read in the frequency table.
     queue_t *queue = queue_construct(8);
-    while (count < total_entries) {
-      fread(&symbol, sizeof(unsigned char), 1, in);
-      fread(&weight, sizeof(int), 1, in);
 
-      node_t *entry = (node_t *)malloc(sizeof(node_t));
-      entry->symbol = symbol;
-      entry->weight = weight;
-      entry->left = NULL;
-      entry->right = NULL;
+    int i;
+    for ( i = 0; i < num_entries; i++ ) {
+        node_t *entry = (node_t *)malloc(sizeof(node_t));
+        entry->left = NULL;
+        entry->right = NULL;
 
-      queue_push(queue, entry);
+        fread(&entry->symbol, sizeof(symbol_t), 1, in);
+        fread(&entry->weight, sizeof(int), 1, in);
 
-      count++;
+        queue_push(queue, entry);
     }
 
     // build Huffman tree
@@ -53,54 +41,53 @@ int main(int argc, char **argv)
     // write decompressed data to file
     FILE *out = fopen("data.uhuff", "wb");
 
-    // We need to read in the total number of bits.
-    long codeCount;
-    if (fread(&codeCount, sizeof(long), 1, in) == 0) {
-      printf("\nThe total number of bits wasn't read! Check format of compressed file.\n\n");
-      exit(1);
-    }
+    long num_codes;
+    fread(&num_codes, sizeof(long), 1, in);
 
     unsigned int buffer;
     unsigned int next;
-    int bits_in_next = sizeof(unsigned int) * 8;
+    int buffer_size = sizeof(unsigned int) * 8;
+    int bits_in_next = buffer_size;
 
     fread(&buffer, sizeof(unsigned int), 1, in);
     fread(&next, sizeof(unsigned int), 1, in);
 
-    int j;
-    for (j = 0; j < codeCount; j++) {
-      char symbol = getSymbol(tree, buffer);
-      int codeLength = getCodeLength(tree, 0, 0x00, symbol);
+    for ( i = 0; i < num_codes; i++ ) {
+        char symbol = get_symbol(tree, buffer);
+        int code_length = get_code_length(tree, 0x00, symbol);
 
-      buffer <<= codeLength;
+        // shift current code out of buffer
+        buffer <<= code_length;
 
-      if ( bits_in_next >= codeLength ) {
-        buffer |= (next >> ((sizeof(unsigned int) * 8) - codeLength));
+        if ( bits_in_next >= code_length ) {
+            // fill up buffer
+            buffer |= (next >> (buffer_size - code_length));
 
-        next <<= codeLength;
-        bits_in_next -= codeLength;
-      }
-      else {
-        // empty next
-        buffer |= (next >> ((sizeof(unsigned int) * 8) - codeLength));
+            next <<= code_length;
+            bits_in_next -= code_length;
+        }
+        else {
+            int num_fill = code_length - bits_in_next;
 
-        int difference = codeLength - bits_in_next;
+            // empty next
+            buffer |= (next >> (buffer_size - code_length));
 
-        next <<= codeLength;
-        bits_in_next = 0;
+            next <<= code_length;
+            bits_in_next = 0;
 
-        // fill up next
-        fread(&next, sizeof(unsigned int), 1, in);
-        bits_in_next = sizeof(unsigned int) * 8;
+            // fill up next
+            fread(&next, sizeof(unsigned int), 1, in);
+            bits_in_next = buffer_size;
 
-        // fill up buffer
-        buffer |= (next >> ((sizeof(unsigned int) * 8) - difference));
+            // fill up buffer
+            buffer |= (next >> (buffer_size - num_fill));
 
-        next <<= difference;
-        bits_in_next -= difference;
-      }
+            next <<= num_fill;
+            bits_in_next -= num_fill;
+        }
 
-      fwrite(&symbol, sizeof(char), 1, out);
+        // write symbol to file
+        fwrite(&symbol, sizeof(char), 1, out);
     }
 
     fclose(in);

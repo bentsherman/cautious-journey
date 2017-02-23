@@ -65,6 +65,18 @@ void queue_push(queue_t *queue, node_t *entry)
 }
 
 /**
+ * Access an entry in a queue by index.
+ *
+ * @param queue
+ * @param i
+ * @return pointer to i-th entry in queue
+ */
+node_t * queue_access(queue_t *queue, int i)
+{
+    return queue->entries[i];
+}
+
+/**
  * Remove the entry of highest priority from a queue.
  *
  * The entry of highest priority is the entry with the
@@ -163,7 +175,7 @@ void tree_destruct(node_t *root)
 }
 
 /**
- * Print the Huffman code for each leaf node in a Huffman tree.
+ * Print the Huffman code for each symbol in a Huffman tree.
  *
  * As a common convention, bit '0' represents following the
  * left child and bit '1' represents following the right child.
@@ -197,15 +209,13 @@ void tree_debug_print(node_t *root, int len, code_t code)
 }
 
 /**
- * Return the Huffman code length for a specific symbol in the tree.
- *
+ * Return the length of a Huffman code for a symbol in a tree.
  *
  * @param root
  * @param len
- * @param code
  * @param symbol
  */
-int getCodeLength(node_t *root, int len, code_t code, symbol_t symbol)
+int get_code_length(node_t *root, int len, symbol_t symbol)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
@@ -215,19 +225,17 @@ int getCodeLength(node_t *root, int len, code_t code, symbol_t symbol)
             : 0;
     }
 
-    return getCodeLength(root->left, len + 1, (code << 1) | 0x0, symbol) + getCodeLength(root->right, len + 1, (code << 1) | 0x1, symbol);
+    return get_code_length(root->left, len + 1, symbol) + get_code_length(root->right, len + 1, symbol);
 }
 
 /**
- * Return the Huffman code for a specific symbol in the tree.
- *
+ * Return the Huffman code for a symbol in a tree.
  *
  * @param root
- * @param len
  * @param code
  * @param symbol
  */
-code_t getCode(node_t *root, int len, code_t code, symbol_t symbol)
+code_t get_code(node_t *root, code_t code, symbol_t symbol)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
@@ -237,16 +245,16 @@ code_t getCode(node_t *root, int len, code_t code, symbol_t symbol)
             : 0;
     }
 
-    return getCode(root->left, len + 1, (code << 1) | 0x0, symbol) + getCode(root->right, len + 1, (code << 1) | 0x1, symbol);
+    return get_code(root->left, (code << 1) | 0x0, symbol) + get_code(root->right, (code << 1) | 0x1, symbol);
 }
 
 /**
- * Return the symbol for a Huffman code in the tree.
+ * Return the symbol for a Huffman code in a tree.
  *
  * @param root
  * @param buffer
  */
-symbol_t getSymbol(node_t *root, unsigned int buffer)
+symbol_t get_symbol(node_t *root, unsigned int buffer)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
@@ -258,29 +266,5 @@ symbol_t getSymbol(node_t *root, unsigned int buffer)
       ? root->right
       : root->left;
 
-    return getSymbol(child, buffer << 1);
-}
-
-/**
- * Adds a symbol frequency pair to the list.
- *
- * @param head
- * @param tail
- * @param symbol
- * @param frequency
- */
-list_t *listAdd(list_t *head, list_t *tail, symbol_t symbol, int frequency) {
-  list_t *entry;
-
-    entry = (list_t *)malloc(sizeof(list_t));
-    entry->symbol = symbol;
-    entry->frequency = frequency;
-    entry->next = NULL;
-    if (head != NULL) {
-      tail->next = entry;
-    } else {
-      head = entry;
-    }
-    tail = entry;
-    return tail;
+    return get_symbol(child, buffer << 1);
 }

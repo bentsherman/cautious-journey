@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     // parse command-line arguments
     if ( argc != 2 ) {
         fprintf(stderr, "usage: ./compress [filename]\n");
-        return 1;
+        exit(1);
     }
 
     // read file
@@ -27,12 +27,8 @@ int main(int argc, char **argv)
     fread(data, sizeof(char), data_len, in);
     fclose(in);
 
-    // create a priority queue and a list of symbols
+    // create a priority queue of symbol-weight pairs
     queue_t *queue = queue_construct(8);
-    list_t *head, *tail;
-    int num_in_list = 0;
-    head = NULL;
-    tail = NULL;
 
     int i, j;
     for ( i = 0; i < 256; i++ ) {
@@ -52,36 +48,28 @@ int main(int argc, char **argv)
             entry->left = NULL;
             entry->right = NULL;
 
-            if (head == NULL) {
-              head = listAdd(head, tail, symbol, weight);
-              tail = head;
-            }
-            else
-              tail = listAdd(head, tail, symbol, weight);
-
-            num_in_list++;
-
             queue_push(queue, entry);
         }
+    }
+
+    // write symbol table to file
+    FILE *out = fopen("data.huff", "wb");
+
+    int num_entries = queue_length(queue);
+
+    fwrite(&num_entries, sizeof(int), 1, out);
+
+    for ( i = 0; i < num_entries; i++ ) {
+        node_t *entry = queue_access(queue, i);
+
+        fwrite(&entry->symbol, sizeof(symbol_t), 1, out);
+        fwrite(&entry->weight, sizeof(int), 1, out);
     }
 
     // build Huffman tree
     node_t *tree = tree_construct(queue);
 
     // write compressed data to file
-    FILE *out = fopen("data.huff", "wb");
-    list_t *Rover;
-
-    // First, write the frequency table, starting with the number of entries.
-    fwrite(&num_in_list, sizeof(int), 1, out);
-    Rover = head;
-    while (Rover != NULL) {
-      fwrite(&(Rover->symbol), sizeof(symbol_t), 1, out);
-      fwrite(&(Rover->frequency), sizeof(int), 1, out);
-      Rover = Rover->next;
-    }
-
-    // Next, we need to write the compressed data, starting with the total number of codes
     unsigned int buffer;
     int buffer_size = sizeof(unsigned int) * 8;
     int bits_in_buffer = 0;
@@ -89,8 +77,8 @@ int main(int argc, char **argv)
     fwrite(&data_len, sizeof(long), 1, out);
 
     for ( j = 0; j < data_len; j++ ) {
-        int current_length = getCodeLength(tree, 0, 0x00, data[j]);
-        code_t current_code = getCode(tree, 0, 0x00, data[j]);
+        int current_length = get_code_length(tree, 0x00, data[j]);
+        code_t current_code = get_code(tree, 0, data[j]);
 
         if ( bits_in_buffer + current_length < buffer_size ) {
             // shift code into buffer
@@ -127,11 +115,12 @@ int main(int argc, char **argv)
             bits_in_buffer = 0;
 
             // shift overflow bits into buffer
-            buffer = current_code & ((unsigned int)(0xFFFFFFFF) >> (buffer_size - num_overflow));
+            buffer = current_code & ~(0xFFFFFFFF << num_overflow);
             bits_in_buffer = num_overflow;
         }
     }
 
+    // write remaining bits in buffer
     if ( bits_in_buffer > 0 ) {
         buffer <<= buffer_size - bits_in_buffer;
         fwrite(&buffer, sizeof(unsigned int), 1, out);
