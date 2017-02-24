@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 
         if ( weight > 0 ) {
             node_t *entry = (node_t *)malloc(sizeof(node_t));
-            entry->symbol = (char) i;
+            entry->symbol = (symbol_t) i;
             entry->weight = weight;
             entry->left = NULL;
             entry->right = NULL;
@@ -39,6 +39,11 @@ int main(int argc, char **argv)
 
     // build Huffman tree
     node_t *tree = tree_construct(queue);
+
+    // build Huffman table
+    code_t *table = (code_t *)calloc(256, sizeof(code_t));
+
+    get_code_table(tree, table, 0, 0x00);
 
     // write decompressed data to file
     FILE *out = fopen("data.uhuff", "wb");
@@ -55,8 +60,8 @@ int main(int argc, char **argv)
     fread(&next, sizeof(unsigned int), 1, in);
 
     for ( i = 0; i < num_codes; i++ ) {
-        char symbol = get_symbol(tree, buffer);
-        int code_length = get_code_length(tree, 0x00, symbol);
+        symbol_t symbol = get_symbol(tree, buffer);
+        int code_length = table[symbol].len;
 
         // shift current code out of buffer
         buffer <<= code_length;
@@ -89,7 +94,7 @@ int main(int argc, char **argv)
         }
 
         // write symbol to file
-        fwrite(&symbol, sizeof(char), 1, out);
+        fwrite(&symbol, sizeof(symbol_t), 1, out);
     }
 
     fclose(in);

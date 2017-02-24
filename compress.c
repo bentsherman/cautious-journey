@@ -55,6 +55,11 @@ int main(int argc, char **argv)
     // build Huffman tree
     node_t *tree = tree_construct(queue);
 
+    // build Huffman table
+    code_t *table = (code_t *)calloc(256, sizeof(code_t));
+
+    get_code_table(tree, table, 0, 0x00);
+
     // write symbol table to file
     FILE *out = fopen("data.huff", "wb");
 
@@ -70,20 +75,19 @@ int main(int argc, char **argv)
     fwrite(&data_len, sizeof(long), 1, out);
 
     for ( i = 0; i < data_len; i++ ) {
-        int current_length = get_code_length(tree, 0x00, data[i]);
-        code_t current_code = get_code(tree, 0, data[i]);
+        code_t code = table[data[i]];
 
-        if ( bits_in_buffer + current_length < buffer_size ) {
+        if ( bits_in_buffer + code.len < buffer_size ) {
             // shift code into buffer
-            buffer <<= current_length;
-            buffer |= current_code;
+            buffer <<= code.len;
+            buffer |= code.code;
 
-            bits_in_buffer += current_length;
+            bits_in_buffer += code.len;
         }
-        else if ( bits_in_buffer + current_length == buffer_size ) {
+        else if ( bits_in_buffer + code.len == buffer_size ) {
             // shift code into buffer
-            buffer <<= current_length;
-            buffer |= current_code;
+            buffer <<= code.len;
+            buffer |= code.code;
 
             // write buffer to file
             fwrite(&buffer, sizeof(unsigned int), 1, out);
@@ -92,13 +96,13 @@ int main(int argc, char **argv)
             buffer = 0;
             bits_in_buffer = 0;
         }
-        else if ( bits_in_buffer + current_length > buffer_size ) {
+        else if ( bits_in_buffer + code.len > buffer_size ) {
             // fill buffer
             int num_fill = buffer_size - bits_in_buffer;
-            int num_overflow = current_length - num_fill;
+            int num_overflow = code.len - num_fill;
 
             buffer <<= num_fill;
-            buffer |= (current_code >> num_overflow);
+            buffer |= (code.code >> num_overflow);
 
             // write buffer to file
             fwrite(&buffer, sizeof(unsigned int), 1, out);
@@ -108,7 +112,7 @@ int main(int argc, char **argv)
             bits_in_buffer = 0;
 
             // shift overflow bits into buffer
-            buffer = current_code & ~(0xFFFFFFFF << num_overflow);
+            buffer = code.code & ~(0xFFFFFFFF << num_overflow);
             bits_in_buffer = num_overflow;
         }
     }
@@ -125,6 +129,7 @@ int main(int argc, char **argv)
     free(data);
     queue_destruct(queue);
     tree_destruct(tree);
+    free(table);
 
     return 0;
 }

@@ -147,7 +147,7 @@ node_t * tree_construct(queue_t *queue)
 }
 
 /**
- * Destruct a binary tree.
+ * Destruct a Huffman tree.
  *
  * @param root
  */
@@ -172,7 +172,7 @@ void tree_destruct(node_t *root)
  * @param len
  * @param code
  */
-void tree_debug_print(node_t *root, int len, code_t code)
+void tree_debug_print(node_t *root, int len, unsigned int code)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
@@ -197,43 +197,28 @@ void tree_debug_print(node_t *root, int len, code_t code)
 }
 
 /**
- * Return the length of a Huffman code for a symbol in a tree.
+ * Construct a table of Huffman codes from a Huffman tree.
  *
  * @param root
+ * @param table
  * @param len
- * @param symbol
- */
-int get_code_length(node_t *root, int len, symbol_t symbol)
-{
-    assert((root->left == NULL) == (root->right == NULL));
-
-    if ( root->left == NULL && root->right == NULL) {
-        return (root->symbol == symbol)
-            ? len
-            : 0;
-    }
-
-    return get_code_length(root->left, len + 1, symbol) + get_code_length(root->right, len + 1, symbol);
-}
-
-/**
- * Return the Huffman code for a symbol in a tree.
- *
- * @param root
  * @param code
- * @param symbol
  */
-code_t get_code(node_t *root, code_t code, symbol_t symbol)
+void get_code_table(node_t *root, code_t *table, int len, unsigned int code)
 {
     assert((root->left == NULL) == (root->right == NULL));
 
     if ( root->left == NULL && root->right == NULL ) {
-        return (root->symbol == symbol)
-            ? code
-            : 0;
-    }
+        int i = (int) root->symbol;
 
-    return get_code(root->left, (code << 1) | 0x0, symbol) + get_code(root->right, (code << 1) | 0x1, symbol);
+        table[i].symbol = root->symbol;
+        table[i].len = len;
+        table[i].code = code;
+    }
+    else {
+        get_code_table(root->left, table, len + 1, (code << 1) | 0x0);
+        get_code_table(root->right, table, len + 1, (code << 1) | 0x1);
+    }
 }
 
 /**
