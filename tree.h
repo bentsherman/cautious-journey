@@ -27,7 +27,6 @@ queue_t * queue_construct(int size);
 void queue_destruct(queue_t *queue);
 int queue_length(queue_t *queue);
 void queue_push(queue_t *queue, node_t *entry);
-node_t * queue_access(queue_t *queue, int i);
 node_t * queue_remove(queue_t *queue);
 void queue_debug_print(queue_t *queue);
 

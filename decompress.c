@@ -18,21 +18,23 @@ int main(int argc, char **argv)
     FILE *in = fopen(argv[1], "rb");
 
     // read symbol table
-    int num_entries;
-    fread(&num_entries, sizeof(int), 1, in);
-
     queue_t *queue = queue_construct(8);
 
     int i;
-    for ( i = 0; i < num_entries; i++ ) {
-        node_t *entry = (node_t *)malloc(sizeof(node_t));
-        entry->left = NULL;
-        entry->right = NULL;
+    for ( i = 0; i < 256; i++ ) {
+        int weight;
 
-        fread(&entry->symbol, sizeof(symbol_t), 1, in);
-        fread(&entry->weight, sizeof(int), 1, in);
+        fread(&weight, sizeof(int), 1, in);
 
-        queue_push(queue, entry);
+        if ( weight > 0 ) {
+            node_t *entry = (node_t *)malloc(sizeof(node_t));
+            entry->symbol = (char) i;
+            entry->weight = weight;
+            entry->left = NULL;
+            entry->right = NULL;
+
+            queue_push(queue, entry);
+        }
     }
 
     // build Huffman tree

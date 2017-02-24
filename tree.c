@@ -65,18 +65,6 @@ void queue_push(queue_t *queue, node_t *entry)
 }
 
 /**
- * Access an entry in a queue by index.
- *
- * @param queue
- * @param i
- * @return pointer to i-th entry in queue
- */
-node_t * queue_access(queue_t *queue, int i)
-{
-    return queue->entries[i];
-}
-
-/**
  * Remove the entry of highest priority from a queue.
  *
  * The entry of highest priority is the entry with the

@@ -5,6 +5,7 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "tree.h"
 
 int main(int argc, char **argv)
@@ -21,30 +22,29 @@ int main(int argc, char **argv)
     fseek(in, 0L, SEEK_END);
 
     long data_len = ftell(in);
-    char *data = (char *)malloc(data_len * sizeof(char));
+    symbol_t *data = (symbol_t *)malloc(data_len * sizeof(symbol_t));
 
     fseek(in, 0L, SEEK_SET);
-    fread(data, sizeof(char), data_len, in);
+    fread(data, sizeof(symbol_t), data_len, in);
     fclose(in);
+
+    // compute the symbol weights
+    int weights[256];
+    memset(weights, 0, 256 * sizeof(int));
+
+    int i;
+    for ( i = 0; i < data_len; i++ ) {
+        weights[data[i]]++;
+    }
 
     // create a priority queue of symbol-weight pairs
     queue_t *queue = queue_construct(8);
 
-    int i, j;
     for ( i = 0; i < 256; i++ ) {
-        char symbol = (char) i;
-        int weight = 0;
-
-        for ( j = 0; j < data_len; j++ ) {
-            if ( data[j] == symbol ) {
-                weight++;
-            }
-        }
-
-        if ( weight > 0 ) {
+        if ( weights[i] > 0 ) {
             node_t *entry = (node_t *)malloc(sizeof(node_t));
-            entry->symbol = symbol;
-            entry->weight = weight;
+            entry->symbol = (symbol_t) i;
+            entry->weight = weights[i];
             entry->left = NULL;
             entry->right = NULL;
 
@@ -52,22 +52,15 @@ int main(int argc, char **argv)
         }
     }
 
+    // build Huffman tree
+    node_t *tree = tree_construct(queue);
+
     // write symbol table to file
     FILE *out = fopen("data.huff", "wb");
 
-    int num_entries = queue_length(queue);
-
-    fwrite(&num_entries, sizeof(int), 1, out);
-
-    for ( i = 0; i < num_entries; i++ ) {
-        node_t *entry = queue_access(queue, i);
-
-        fwrite(&entry->symbol, sizeof(symbol_t), 1, out);
-        fwrite(&entry->weight, sizeof(int), 1, out);
+    for ( i = 0; i < 256; i++ ) {
+        fwrite(&weights[i], sizeof(int), 1, out);
     }
-
-    // build Huffman tree
-    node_t *tree = tree_construct(queue);
 
     // write compressed data to file
     unsigned int buffer;
@@ -76,9 +69,9 @@ int main(int argc, char **argv)
 
     fwrite(&data_len, sizeof(long), 1, out);
 
-    for ( j = 0; j < data_len; j++ ) {
-        int current_length = get_code_length(tree, 0x00, data[j]);
-        code_t current_code = get_code(tree, 0, data[j]);
+    for ( i = 0; i < data_len; i++ ) {
+        int current_length = get_code_length(tree, 0x00, data[i]);
+        code_t current_code = get_code(tree, 0, data[i]);
 
         if ( bits_in_buffer + current_length < buffer_size ) {
             // shift code into buffer
